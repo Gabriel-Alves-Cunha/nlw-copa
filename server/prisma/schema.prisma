@@ -6,7 +6,9 @@ generator client {
 }
 
 generator erd {
-  provider = "prisma-erd-generatoryya"
+  provider = "prisma-erd-generator"
+  theme    = "dark"
+  erdDebug = false
 }
 
 datasource db {
@@ -16,7 +18,58 @@ datasource db {
 
 model Pool {
   id        String   @id @default(cuid())
-  title     String
   code      String   @unique
+  title     String
+  ownerId   String?
   createdAt DateTime @default(now())
+
+  owner        User?         @relation(fields: [ownerId], references: [id])
+  participants Participant[]
+}
+
+model Participant {
+  id     String @id @default(cuid())
+  userId String
+  poolId String
+
+  pool    Pool    @relation(fields: [poolId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  guesses Guess[]
+
+  @@unique([userId, poolId])
+}
+
+model User {
+  id String @id @default(cuid())
+
+  name      String
+  email     String   @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  participatingAt Participant[]
+  ownedPools      Pool[]
+}
+
+model Game {
+  id   String   @id @default(cuid())
+  date DateTime
+
+  firstTeamCountryCode  String
+  secondTeamCountryCode String
+
+  guesses Guess[]
+}
+
+model Guess {
+  id String @id @default(cuid())
+
+  firstTeamPoints  Int
+  secondTeamPoints Int
+  createdAt        DateTime @default(now())
+  participantId    String
+  gameId           String
+
+  participant Participant @relation(fields: [participantId], references: [id])
+  game        Game        @relation(fields: [gameId], references: [id])
 }
